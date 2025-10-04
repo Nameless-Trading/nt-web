@@ -123,7 +123,7 @@ export default function Markets({
       <div className="flex flex-col gap-4">
         {gameDays.map((gameDay) => {
           const key = gameDay.toISOString().split("T")[0];
-          const rows = Object.values(markets)
+          const allRows = Object.values(markets)
             .filter((m) => m.gameDate === key)
             .filter((m) => {
               if (!filter90to100) return true;
@@ -136,12 +136,13 @@ export default function Markets({
                 a.gameStartTimeMT.getTime() - b.gameStartTimeMT.getTime()
             );
 
-          return (
-            <div key={key} className="rounded-lg border p-4">
-              <h2 className="text-center text-lg font-semibold mb-4">
-                {formatDateUTC(gameDay)}
-              </h2>
+          const now = new Date();
+          const startedRows = allRows.filter((m) => m.gameStartTimeMT <= now);
+          const upcomingRows = allRows.filter((m) => m.gameStartTimeMT > now);
 
+          const renderTable = (rows: Market[], title: string) => (
+            <div className="mb-6 last:mb-0">
+              <h3 className="text-md font-medium mb-2">{title}</h3>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-sm">
                   <thead>
@@ -191,6 +192,22 @@ export default function Markets({
                   </tbody>
                 </table>
               </div>
+            </div>
+          );
+
+          return (
+            <div key={key} className="rounded-lg border p-4">
+              <h2 className="text-center text-lg font-semibold mb-4">
+                {formatDateUTC(gameDay)}
+              </h2>
+
+              {startedRows.length > 0 && renderTable(startedRows, "Started")}
+              {upcomingRows.length > 0 && renderTable(upcomingRows, "Upcoming")}
+              {allRows.length === 0 && (
+                <div className="p-4 text-center text-muted-foreground">
+                  No markets yet.
+                </div>
+              )}
             </div>
           );
         })}
