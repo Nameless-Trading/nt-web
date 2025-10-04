@@ -4,7 +4,7 @@ import Markets from "@/components/Markets";
 //temporary spaghetti code
 async function getGameDays(): Promise<string[]> {
   const base = process.env.NEXT_PUBLIC_FASTAPI_HTTP
-  if (!base) throw new Error("FASTAPI base URL is not configured");
+  if (!base) throw new Error("NEXT_PUBLIC_FASTAPI_HTTP is not set");
 
   const res = await fetch(`${base}/game-days`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load game days");

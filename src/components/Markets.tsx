@@ -57,6 +57,7 @@ export default function Markets({
 }) {
   const [connected, setConnected] = useState(false);
   const [markets, setMarkets] = useState<Record<string, Market>>({});
+  const [filter90to100, setFilter90to100] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Convert ISO strings → Date once
@@ -67,6 +68,7 @@ export default function Markets({
 
   useEffect(() => {
     const url = `${process.env.NEXT_PUBLIC_FASTAPI_WS}/ws`;
+    if (!url) throw new Error("NEXT_PUBLIC_FASTAPI_WS is not set");
     const ws = new WebSocket(url);
     wsRef.current = ws;
 
@@ -106,11 +108,29 @@ export default function Markets({
         {connected ? "Connected to websocket" : "Disconnected from websocket"}
       </div>
 
+      <div className="rounded-lg border p-4">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={filter90to100}
+            onChange={(e) => setFilter90to100(e.target.checked)}
+            className="w-4 h-4"
+          />
+          <span>Show only 90-100¢ contracts</span>
+        </label>
+      </div>
+
       <div className="flex flex-col gap-4">
         {gameDays.map((gameDay) => {
           const key = gameDay.toISOString().split("T")[0];
           const rows = Object.values(markets)
             .filter((m) => m.gameDate === key)
+            .filter((m) => {
+              if (!filter90to100) return true;
+              const bidInRange = m.bidPrice >= 90 && m.bidPrice <= 100;
+              const askInRange = m.askPrice >= 90 && m.askPrice <= 100;
+              return bidInRange || askInRange;
+            })
             .sort(
               (a, b) =>
                 a.gameStartTimeMT.getTime() - b.gameStartTimeMT.getTime()
